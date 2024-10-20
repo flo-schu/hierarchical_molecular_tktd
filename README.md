@@ -55,7 +55,7 @@ datalad create -c text2git data
 
 This is the layout of your folder. Files like README, requirements, LICENSE and .gitignore are not shown, because they are not strictly necessary for the case study but contain important metadata
 ```
-└─ test_case_study
+└─ lotka_volterra_case_study
     ├─ data
     │   └─ ...
     ├─ results
