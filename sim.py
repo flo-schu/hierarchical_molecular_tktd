@@ -27,6 +27,10 @@ class NomixHierarchicalSimulation(SingleSubstanceSim2):
         super().initialize(input)
         self.set_fixed_parameters(None)
         
+        # create an index and add it to the simulation
+        experiment_index = self.create_index("experiment_id")
+        self.indices.update(experiment_index)
+
         # configure JaxSolver
         self.solver = JaxSolver
         self.config.simulation.batch_dimension = "id"
@@ -392,7 +396,7 @@ def independent_survival_error_model(theta, simulation_results, observations, ma
         ).mask(masks["survival"]), 
         obs=observations["survival"]
     )
-    
+
 def plot_y0(sim, idata, idata_group, parameter, levels, colors={}):
     fig, ax = plt.subplots(1,1, figsize=(16,3.5))
     y0 = sim.model_parameters["y0"]
