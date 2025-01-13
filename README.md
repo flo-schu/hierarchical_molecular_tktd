@@ -17,16 +17,16 @@ Install git (https://git-scm.com/downloads), conda (https://docs.anaconda.com/fr
 Open a command line utility (cmd, bash, ...) and execute
 
 ```bash
-git clone git@github.com:flo-schu/CASE_STUDY
+git clone git@github.com:flo-schu/hierarchical_molecular_tktd/0.1.0
 cd CASE_STUDY
 ```
 
 Create environment, activate it and install model package. 
 ```bash
-conda create -n CASE_STUDY
-conda activate guts
+conda create -n hierarchical_molecular_tktd
+conda activate hierarchical_molecular_tktd
 conda install python=3.11
-pip install -r requirements.txt
+pip install -e .
 ```
 
 In order to install additional inference backends, use:
@@ -42,7 +42,7 @@ For the available backends see https://pymob.readthedocs.io/en/latest/
 Download potentially existing results datasets
 
 ```bash
-datalad clone git@gin.g-node.org:/flo-schu/CASE_STUDY__results.git results
+datalad clone git@gin.g-node.org:/flo-schu/hierarchical_molecular_tktd__results.git results
 ```
 
 if this is not possible create a new dataset (see section below) 
@@ -55,7 +55,7 @@ datalad create -c text2git data
 
 This is the layout of your folder. Files like README, requirements, LICENSE and .gitignore are not shown, because they are not strictly necessary for the case study but contain important metadata
 ```
-└─ lotka_volterra_case_study
+└─ hierarchical_molecular_tktd
     ├─ data
     │   └─ ...
     ├─ results
@@ -66,13 +66,13 @@ This is the layout of your folder. Files like README, requirements, LICENSE and 
     │   └─ test_scenario_2
     ├─ scripts
     │   └─ ...
-    ├─ __init__.py
-    ├─ data.py
-    ├─ mod.py
-    ├─ plot.py
-    ├─ prob.py
-    ├─ sim.py
-    ├─ ...
+    └─ hierarchical_molecular_tktd
+        ├─ __init__.py
+        ├─ data.py
+        ├─ mod.py
+        ├─ plot.py
+        ├─ prob.py
+        └─ sim.py
 ```
 
 ## Usage
@@ -116,7 +116,7 @@ if the directory already exists, use the `-f` flag:
 
 2. add the repository as a remote for the dataset
 
-`datalad siblings add -d . --name gin --url git@gin.g-node.org:/flo-schu/CASE_STUDY__results.git`
+`datalad siblings add -d . --name gin --url git@gin.g-node.org:/flo-schu/hierarchical_molecular_tktd__results.git`
 
 The remote is now connected to the sibling `gin`. 
 
