@@ -12,17 +12,19 @@ from pymob.sim.config import DataVariable
 import jax.numpy as jnp
 import numpyro
 from numpyro import distributions as dist
+
+# TODO: Remove
 EPS = 9.9e-5
 
 # load the basic TKTD RNA Pulse case study and use as a parent class for the
 # hierarchical model
-config = Config()
-config.case_study.name = "tktd_rna_pulse"
-config.case_study.package = "case_studies"
-config.import_casestudy_modules(reset_path=True)
-from tktd_rna_pulse.sim import SingleSubstanceSim2
+# config = Config()
+# config.case_study.name = "tktd_rna_pulse"
+# config.case_study.package = "case_studies"
+# config.import_casestudy_modules(reset_path=True)
+from tktd_rna_pulse.sim import SingleSubstanceSim3
 
-class NomixHierarchicalSimulation(SingleSubstanceSim2):
+class NomixHierarchicalSimulation(SingleSubstanceSim3):
     def initialize(self, input):
         super().initialize(input)
         self.set_fixed_parameters(None)
