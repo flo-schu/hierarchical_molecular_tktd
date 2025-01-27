@@ -1,3 +1,4 @@
+import time
 import numpy as np
 from matplotlib import pyplot as plt
 import arviz as az
@@ -5,6 +6,7 @@ import xarray as xr
 
 import jax
 import jax.numpy as jnp
+jax.config.update("jax_enable_x64", True)
 
 from pymob import Config
 from pymob.sim.config import Param
@@ -23,7 +25,7 @@ config = Config("scenarios/hierarchical_cext_nested_sigma_hyperprior/settings.cf
 sim = NomixHierarchicalSimulation(config)
 
 sim.config.inference_numpyro.gaussian_base_distribution = True
-sim.config.jaxsolver.throw_exception = False
+sim.config.jaxsolver.throw_exception = True
 sim.config.jaxsolver.max_steps = 10_000
 sim.setup()
 sim.dispatch_constructor()
@@ -64,6 +66,28 @@ def func(theta):
         
     return f(params)
 
+# Compute the gradient function
+grad = jax.grad(func)
+
+print("Jit-compiling likelihood function")
+func({"k_i_substance_normal_base": jnp.array([1.47]), "r_rt_substance_normal_base": jnp.array([-1.31])})
+
+diff = time.time()
+for i in range(10):
+    func({"k_i_substance_normal_base": jnp.array([1.47]), "r_rt_substance_normal_base": jnp.array([-1.31])})
+diff -= time.time()
+print(f"10 function evaluations took {round(-diff,2)} seconds")
+
+print("Jit-compiling gradient function")
+grad({"k_i_substance_normal_base": jnp.array([1.47]), "r_rt_substance_normal_base": jnp.array([-1.31])})
+diff = time.time()
+for i in range(10):
+    grad({"k_i_substance_normal_base": jnp.array([1.47]), "r_rt_substance_normal_base": jnp.array([-1.31])})
+diff -= time.time()
+
+print(f"10 gradient evaluations took {round(-diff,2)} seconds")
+
+
 k_i_0_mode = mode["k_i_substance_normal_base"][0]
 r_rt_0_mode = mode["r_rt_substance_normal_base"][0]
 
@@ -71,20 +95,12 @@ dev = 2  # standard deviations
 sim.config.model_parameters.k_i_substance_normal_base = Param(min=k_i_0_mode - dev, max=k_i_0_mode + dev)
 sim.config.model_parameters.r_rt_substance_normal_base = Param(min=r_rt_0_mode - dev, max=r_rt_0_mode + dev)
 
-# Compute the gradient function
-gradient_func = jax.grad(func)
-
-jax.vmap(func)({"k_i_substance_normal_base": jnp.array([[1.47]]), "r_rt_substance_normal_base": jnp.array([[-1.31]])})
-grad = jax.vmap(jax.grad(func))
-grad({"k_i_substance_normal_base": jnp.array([[1.47]]), "r_rt_substance_normal_base": jnp.array([[-1.31]])})
-
-
 ax = sim.inferer.plot_likelihood_landscape(
     parameters=("k_i_substance_normal_base", "r_rt_substance_normal_base"),
-    log_likelihood_func=jax.vmap(func),
+    log_likelihood_func=func,
     gradient_func=grad,
-    n_grid_points=20,
-    n_vector_points=20,
+    n_grid_points=30,
+    n_vector_points=50,
 )
 
 ax.figure.savefig(f"{sim.output_path}/test_loglikelihood_gradients.png")
