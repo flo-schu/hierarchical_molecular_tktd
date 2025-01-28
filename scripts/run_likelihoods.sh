@@ -2,8 +2,8 @@
 #SBATCH --job-name=likelihood-landscape                 # name of job
 #SBATCH --time=0-12:00:00                               # maximum time until job is cancelled
 #SBATCH --ntasks=1                                      # number of tasks
-#SBATCH --cpus-per-task=8                               # number of cpus requested
-#SBATCH --mem-per-cpu=8G                                # memory per cpu requested
+#SBATCH --cpus-per-task=1                               # number of cpus requested
+#SBATCH --mem-per-cpu=16G                                # memory per cpu requested
 #SBATCH --mail-type=begin                               # send mail when job begins
 #SBATCH --mail-type=end                                 # send mail when job ends
 #SBATCH --mail-type=fail                                # send mail if job fails
