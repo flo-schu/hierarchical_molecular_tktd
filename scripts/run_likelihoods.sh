@@ -26,23 +26,31 @@ strings=(
     "sigma_cint"
 )
 
+parameters=()
+
+# Iterate over the array to create pairs
+for ((i=0; i<${#strings[@]}-1; i++)); do
+    for ((j=i+1; j<${#strings[@]}; j++)); do
+        # Store the pair in the pairs array
+        parameters+=("${strings[i]} ${strings[j]}")
+    done
+done
+
 spack load miniconda3
 source activate hmt
 spack unload miniconda3
 
 export JAX_ENABLE_X64=True
 
-# Iterate over the array using nested loops
-for ((i=0; i<${#strings[@]}-1; i++)); do
-    for ((j=i+1; j<${#strings[@]}; j++)); do
-        # Construct the pair
-        echo "Processing pair: ${strings[i]} ${strings[j]}"
-        
-        python scripts/likelihood_landscape.py \
-            --config=scenarios/hierarchical_cext_nested_sigma_hyperprior/settings.cfg \
-            --parx="${strings[i]}" \
-            --pary="${strings[J]}" \
-            --n_grid_points=50 \
-            --n_vector_points=0
-    done
-done
+index=$SLURM_ARRAY_TASK_ID
+
+# Extract the two elements from the pair into separate variables
+pair=${parameters[index]}
+read -r parx pary <<< "$pair"
+
+python scripts/likelihood_landscape.py \
+    --config=scenarios/hierarchical_cext_nested_sigma_hyperprior/settings.cfg \
+    --parx="${parx}" \
+    --pary="${pary}" \
+    --n_grid_points=50 \
+    --n_vector_points=0
