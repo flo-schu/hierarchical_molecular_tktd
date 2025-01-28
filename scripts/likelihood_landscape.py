@@ -23,16 +23,20 @@ from hierarchical_molecular_tktd.sim import (
 @click.option("--config", type=str)
 @click.option("--parx", type=str)
 @click.option("--pary", type=str)
+@click.option("--std_dev", type=float, default=2)
 @click.option("--n_grid_points", type=int, default=50)
-@click.option("--n_vector_points", type=int, default=50)
+@click.option("--n_vector_points", type=int, default=0)
 @click.option("--debug/--no-debug", default=False)
-def main(config, parx, pary, n_grid_points, n_vector_points, debug):
+def main(config, parx, pary, std_dev, n_grid_points, n_vector_points, debug):
 
     if debug:
         import pdb
         pdb.set_trace()
 
     sim = NomixHierarchicalSimulation(config)
+    
+    folder = os.path.join(sim.output_path, "likelihood_landscapes")
+    os.makedirs(folder, exist_ok=True)
 
     sim.config.inference_numpyro.gaussian_base_distribution = True
     sim.config.jaxsolver.throw_exception = False
@@ -54,15 +58,37 @@ def main(config, parx, pary, n_grid_points, n_vector_points, debug):
         return {k: v.values for k, v in dataset.data_vars.items()}
     
     mean = dataset_to_dict(sim.inferer.idata.unconstrained_posterior.mean(("chain", "draw")))
-    mpx = mean[f"{parx}_normal_base"]
-    mpy = mean[f"{pary}_normal_base"]
+    mpx = np.array(mean[f"{parx}_normal_base"], ndmin=1)
+    mpy = np.array(mean[f"{pary}_normal_base"], ndmin=1)
     mean_frozen = frozendict({k: tuple(np.array(v, ndmin=1).tolist()) for k, v in mean.items()})
 
+    # get extra dim
+    parx_extra_dim = [d for d in sim.inferer.idata.posterior[parx].dims if d not in ("chain", "draw")]
+    if len(parx_extra_dim) == 0:
+        parx_coords = [""]
+        parx_extra_dim = ""
+    elif len(parx_extra_dim) == 1:
+        parx_coords = [f" [{v}]" for v in sim.inferer.idata.posterior[parx].coords[parx_extra_dim[0]].values]
+        parx_extra_dim = parx_extra_dim[0]
+    else:
+        raise ValueError("Only 1-D Parameters are supported")
 
-    fig, axes = plt.subplots(ncols=len(mpx), nrows=len(mpy), figsize=(10,10))
+    # get extra dim
+    pary_extra_dim = [d for d in sim.inferer.idata.posterior[pary].dims if d not in ("chain", "draw")]
+    if len(pary_extra_dim) == 0:
+        pary_coords = [""]
+        pary_extra_dim = ""
+    elif len(pary_extra_dim) == 1:
+        pary_coords = [f" [{v}]" for v in sim.inferer.idata.posterior[pary].coords[pary_extra_dim[0]].values]
+        pary_extra_dim = pary_extra_dim[0]
+    else:
+        raise ValueError("Only 1-D Parameters are supported")
 
-    for i, x in enumerate(mpx):
-        for j, y in enumerate(mpy):
+
+    fig, axes = plt.subplots(ncols=len(mpx), nrows=len(mpy), figsize=(14,10), squeeze=False)
+
+    for i, (axcol, x) in enumerate(zip(axes.T, mpx)):
+        for j, (ax, y) in enumerate(zip(axcol, mpy)):
             sim.dispatch_constructor()
             sim.set_inferer("numpyro")
     
@@ -118,22 +144,24 @@ def main(config, parx, pary, n_grid_points, n_vector_points, debug):
             # func_({f"{parx}_normal_base": jnp.array([x]), f"{pary}_normal_base": jnp.array([y])})
 
 
-            dev = 1  # standard deviations
+            dev = std_dev  # standard deviations
             ax = sim.inferer.plot_likelihood_landscape(
                 parameters=(parx, pary),
                 # bounds=([x - dev, x + dev], [y - dev, y + dev]),
                 bounds=([- dev, + dev], [- dev, + dev]),
                 log_likelihood_func=func_,
-                # gradient_func=grad,
+                gradient_func=None if n_vector_points== 0 else grad,
                 n_grid_points=n_grid_points,
-                # n_vector_points=n_vector_points,
+                n_vector_points=n_vector_points,
                 normal_base=True,
-                ax=axes[i,j]
+                ax=ax
             )
 
-    folder = os.path.join(sim.output_path, "likelihood_landscapes")
-    os.makedirs(folder, exist_ok=True)
-    ax.figure.savefig(os.path.join(folder, f"{parx}__{pary}.png"))
+            ax.set_xlabel(f"{parx.replace(f'_{parx_extra_dim}', '')}{parx_coords[i]}")
+            ax.set_ylabel(f"{pary.replace(f'_{pary_extra_dim}', '')}{pary_coords[j]}")
+
+            fig.tight_layout()
+            ax.figure.savefig(os.path.join(folder, f"{parx}__{pary}.png"))
 
 
 if __name__ == "__main__":
