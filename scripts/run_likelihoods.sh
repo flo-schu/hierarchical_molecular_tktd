@@ -26,6 +26,12 @@ strings=(
     "sigma_cint"
 )
 
+spack load miniconda3
+source activate hmt
+spack unload miniconda3
+
+export JAX_ENABLE_X64=True
+
 # Iterate over the array using nested loops
 for ((i=0; i<${#strings[@]}-1; i++)); do
     for ((j=i+1; j<${#strings[@]}; j++)); do
