@@ -3,7 +3,7 @@
 #SBATCH --time=0-12:00:00                               # maximum time until job is cancelled
 #SBATCH --ntasks=1                                      # number of tasks
 #SBATCH --cpus-per-task=1                               # number of cpus requested
-#SBATCH --mem-per-cpu=16G                                # memory per cpu requested
+#SBATCH --mem-per-cpu=32G                                # memory per cpu requested
 #SBATCH --mail-type=begin                               # send mail when job begins
 #SBATCH --mail-type=end                                 # send mail when job ends
 #SBATCH --mail-type=fail                                # send mail if job fails
@@ -19,11 +19,11 @@ strings=(
     "z_ci_substance"
     "k_p_substance"
     "k_m_substance"
-    "h_b_substance"
+    #"h_b_substance"
     "z_substance"
     "kk_substance"
-    "sigma_nrf2"
-    "sigma_cint"
+    #"sigma_nrf2"
+    #"sigma_cint"
 )
 
 parameters=()
@@ -52,5 +52,6 @@ python scripts/likelihood_landscape.py \
     --config=scenarios/hierarchical_cext_nested_sigma_hyperprior/settings.cfg \
     --parx="${parx}" \
     --pary="${pary}" \
-    --n_grid_points=50 \
-    --n_vector_points=0
+    --std_dev=2 \
+    --n_grid_points=100 \
+    --n_vector_points=50
