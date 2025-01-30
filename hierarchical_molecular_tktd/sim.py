@@ -35,7 +35,6 @@ class NomixHierarchicalSimulation(SingleSubstanceSim3):
 
         # configure JaxSolver
         self.solver = JaxSolver
-        self.config.simulation.batch_dimension = "id"
 
         # use_numpyro_backend can be written into the intiialize method
         # self.use_numpyro_backend()
