@@ -15,6 +15,7 @@ dependencies=[
     "pymob[numpyro] == 0.5.0a17",
     "expydb == 0.3.3",
     "guts_base @ git+ssh://git@gitlab.uni-osnabrueck.de/fschunck/guts_base.git@0.5.0",
+    "tktd_rna_pulse @ git+ssh://git@github.com/fschunck/tktd_rna_pulse.git@0.2.0",
 ]
 license = {file = "LICENSE"}
 classifiers = [
