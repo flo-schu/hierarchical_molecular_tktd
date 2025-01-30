@@ -14,6 +14,7 @@ def construct_sim(scenario, simulation_class):
     "hierarchical_cext",
     "hierarchical_cext_nested",
     "hierarchical_cext_nested_sigma_hyperprior",
+    "hierarchical_cext_nested_sigma_hyperprior_reduced_dataset",
 ])
 def scenario(request):
     return request.param
@@ -61,7 +62,8 @@ def test_inference(sim, backend):
     # to ID is called substance_index. As the dimension of the variable
     # is substance. This can be filled in automatically. The big advantage of 
     # this is that it can be done in the evaluator, if the keyword is set.
-    sim.inferer.prior_predictions(n=2)
+    sim.config.inference.n_predictions = 2
+    sim.prior_predictive_checks()
 
 
 
