@@ -1,8 +1,6 @@
 import os
-import time
 import numpy as np
 from matplotlib import pyplot as plt
-import arviz as az
 import xarray as xr
 import click
 from click.testing import CliRunner
@@ -11,9 +9,6 @@ from frozendict import frozendict
 import jax
 import jax.numpy as jnp
 jax.config.update("jax_enable_x64", True)
-
-from pymob import Config
-from pymob.sim.config import Param, Modelparameters
 
 from hierarchical_molecular_tktd.sim import (
     NomixHierarchicalSimulation, 
@@ -34,7 +29,7 @@ def main(config, parx, pary, std_dev, n_grid_points, n_vector_points, debug):
         pdb.set_trace()
 
     sim = NomixHierarchicalSimulation(config)
-    
+
     folder = os.path.join(sim.output_path, "likelihood_landscapes")
     os.makedirs(folder, exist_ok=True)
 
@@ -52,15 +47,17 @@ def main(config, parx, pary, std_dev, n_grid_points, n_vector_points, debug):
 
     sim.dispatch_constructor()
     sim.set_inferer("numpyro")
-    sim.inferer.load_results(f"numpyro_svi_posterior.nc")
+    sim.inferer.load_results()
 
     def dataset_to_dict(dataset: xr.Dataset):
         return {k: v.values for k, v in dataset.data_vars.items()}
     
-    mean = dataset_to_dict(sim.inferer.idata.unconstrained_posterior.mean(("chain", "draw")))
-    mpx = np.array(mean[f"{parx}_normal_base"], ndmin=1)
-    mpy = np.array(mean[f"{pary}_normal_base"], ndmin=1)
-    mean_frozen = frozendict({k: tuple(np.array(v, ndmin=1).tolist()) for k, v in mean.items()})
+    mode_draw = sim.inferer.idata.log_likelihood.sum(("id", "time")).to_array().sum("variable").argmax()
+    
+    mode = dataset_to_dict(sim.inferer.idata.unconstrained_posterior.sel(chain=0, draw=mode_draw))
+    mpx = np.array(mode[f"{parx}_normal_base"], ndmin=1)
+    mpy = np.array(mode[f"{pary}_normal_base"], ndmin=1)
+    mode_frozen = frozendict({k: tuple(np.array(v, ndmin=1).tolist()) for k, v in mode.items()})
 
     # get extra dim
     parx_extra_dim = [d for d in sim.inferer.idata.posterior[parx].dims if d not in ("chain", "draw")]
@@ -91,20 +88,24 @@ def main(config, parx, pary, std_dev, n_grid_points, n_vector_points, debug):
         for j, (ax, y) in enumerate(zip(axcol, mpy)):
             sim.dispatch_constructor()
             sim.set_inferer("numpyro")
-    
+
+            def only_data_loglik(joint, prior, data): 
+                return jnp.array(list({k: v.sum() for k,v in data.items()}.values())).sum()
+
             f, grad = sim.inferer.create_log_likelihood(
-                return_type="joint-log-likelihood",
+                return_type="custom",
+                custom_return_fn=only_data_loglik,
                 check=False,
                 scaled=True,
                 vectorize=False,
                 # gradients=True
             )
 
-            @partial(jax.jit, static_argnames=["_i","_j", "_mean", "_parx", "_pary"])
-            def func(theta, _i, _j, _mean, _parx, _pary):
+            @partial(jax.jit, static_argnames=["_i","_j", "_mode", "_parx", "_pary"])
+            def func(theta, _i, _j, _mode, _parx, _pary):
                 # select first substance
                 params = {}
-                for key, _value in _mean.items():
+                for key, _value in _mode.items():
                     value = jnp.array(_value)
                     if key in theta and theta[key].shape == value.shape:
                         new_value = theta[key]
@@ -121,11 +122,11 @@ def main(config, parx, pary, std_dev, n_grid_points, n_vector_points, debug):
                 return f(params)
             
             # Compute the gradient function
-            grad = jax.grad(partial(func, _i=i, _j=j, _mean=mean_frozen, _parx=parx, _pary=pary))
-            func_ = partial(func, _i=i, _j=j, _mean=mean_frozen, _parx=parx, _pary=pary)
+            grad = jax.grad(partial(func, _i=i, _j=j, _mode=mode_frozen, _parx=parx, _pary=pary))
+            func_ = partial(func, _i=i, _j=j, _mode=mode_frozen, _parx=parx, _pary=pary)
 
             # sim.logger.info("Jit-compiling likelihood function")
-            # func_({f"{parx}_normal_base": jnp.array([x]), f"{pary}_normal_base": jnp.array([y])})
+            # func_({f"{parx}_normal_base": jnp.array([-0.0]), f"{pary}_normal_base": jnp.array([0.0])})
 
             # diff = time.time()
             # for _ in range(10):
@@ -144,11 +145,10 @@ def main(config, parx, pary, std_dev, n_grid_points, n_vector_points, debug):
             # func_({f"{parx}_normal_base": jnp.array([x]), f"{pary}_normal_base": jnp.array([y])})
 
 
-            dev = std_dev  # standard deviations
             ax = sim.inferer.plot_likelihood_landscape(
                 parameters=(parx, pary),
-                # bounds=([x - dev, x + dev], [y - dev, y + dev]),
-                bounds=([- dev, + dev], [- dev, + dev]),
+                bounds=([x - std_dev, x + std_dev], [y - std_dev, y + std_dev]),
+                # bounds=([0 - std_dev, 0 + std_dev], [0 - std_dev, 0 + std_dev]),
                 log_likelihood_func=func_,
                 gradient_func=None if n_vector_points== 0 else grad,
                 n_grid_points=n_grid_points,
