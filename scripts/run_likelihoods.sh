@@ -11,6 +11,8 @@
 #SBATCH --output=/home/staff/f/fschunck/logs/job-%x-%A_%a.out    # output file of stdout messages
 #SBATCH --error=/home/staff/f/fschunck/logs/job-%x-%A_%a.err     # output file of stderr messages
 
+# this results in n!/(k!(n-k)!) with k = 2 combinations: n=9 --> 36; n=10 --> 45
+# For the pairwise case the equations simplifies to: (n**2-n)/2
 strings=(
     "k_i_substance"
     "r_rt_substance"
