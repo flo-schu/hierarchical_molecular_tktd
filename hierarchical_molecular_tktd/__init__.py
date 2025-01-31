@@ -4,4 +4,4 @@ from . import prob
 from . import mod
 from . import sim
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
