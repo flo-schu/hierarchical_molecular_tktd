@@ -17,7 +17,7 @@ Install git (https://git-scm.com/downloads), conda (https://docs.anaconda.com/fr
 Open a command line utility (cmd, bash, ...) and execute
 
 ```bash
-git clone git@github.com:flo-schu/hierarchical_molecular_tktd/0.1.1
+git clone git@github.com:flo-schu/hierarchical_molecular_tktd/0.1.2
 cd CASE_STUDY
 ```
 
