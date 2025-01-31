@@ -5,6 +5,7 @@ from hierarchical_molecular_tktd.sim import NomixHierarchicalSimulation
 def construct_sim(scenario, simulation_class):
     """Helper function to construct simulations for debugging"""
     sim = simulation_class(f"scenarios/{scenario}/settings.cfg")
+    sim.config.case_study.scenario = "testing"
     sim.setup()
     return sim
 
