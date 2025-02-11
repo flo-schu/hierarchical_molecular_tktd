@@ -1,0 +1,15 @@
+case_study: hierarchical_molecular_tktd
+
+scenarios:
+  - hierarchical_cext_nested_sigma_hyperprior_reduced_dataset
+  # - hierarchical_cext_nested_sigma_hyperprior_reduced_dataset_rna_pulse_5
+  # - hierarchical_cext_nested_sigma_hyperprior_reduced_dataset_rna_pulse_5_substance_independent
+  # - hierarchical_cext_nested_sigma_hyperprior_rna_pulse_5
+  # - hierarchical_cext_nested_sigma_hyperprior_rna_pulse_5_substance_independent
+
+likelihood_landscapes:
+  run: True
+  n_grid_points: 100
+  n_vector_points: 50
+  std_dev: 2.0
+
