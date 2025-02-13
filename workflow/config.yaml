@@ -5,6 +5,10 @@ scenarios:
   - hierarchical_cext_nested_sigma_hyperprior_reduced_dataset_rna_pulse_5_substance_independent
   - hierarchical_cext_nested_sigma_hyperprior_rna_pulse_5
   - hierarchical_cext_nested_sigma_hyperprior_rna_pulse_5_substance_independent
+  - hierarchical_cext_nested_sigma_hyperprior_informed_reduced_dataset_rna_pulse_5
+  - hierarchical_cext_nested_sigma_hyperprior_informed_reduced_dataset_rna_pulse_5_substance_independent
+  - hierarchical_cext_nested_sigma_hyperprior_informed_rna_pulse_5
+  - hierarchical_cext_nested_sigma_hyperprior_informed_rna_pulse_5_substance_independent
 
 likelihood_landscapes:
   run: True
