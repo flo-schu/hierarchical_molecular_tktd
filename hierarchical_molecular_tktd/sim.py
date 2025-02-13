@@ -271,6 +271,30 @@ class NomixHierarchicalSimulation(SingleSubstanceSim3):
             )
         }
 
+    def prior_predictive_checks(self):
+        super().prior_predictive_checks()
+        plot_y0(
+            sim=self, 
+            idata=self.inferer.idata, 
+            parameter="cext", 
+            idata_group="prior", 
+            levels=["experiment_id", "substance",], 
+            colors={"substance": ["tab:green", "tab:blue", "tab:purple"]}
+        )
+        
+
+    def posterior_predictive_checks(self):
+        super().posterior_predictive_checks()
+        plot_y0(
+            sim=self, 
+            idata=self.inferer.idata, 
+            parameter="cext", 
+            idata_group="posterior", 
+            levels=["experiment_id", "substance",], 
+            colors={"substance": ["tab:green", "tab:blue", "tab:purple"]}
+        )
+
+
 
 def plot_y0(sim, idata, idata_group, parameter, levels, colors={}):
     fig, ax = plt.subplots(1,1, figsize=(16,3.5))
