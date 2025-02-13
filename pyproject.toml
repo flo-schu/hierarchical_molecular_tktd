@@ -12,7 +12,7 @@ description = "Molecular TKTD: Hierarchical TKTD RNA Pulse model"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies=[
-    "tktd_rna_pulse @ git+ssh://git@github.com/flo-schu/tktd_rna_pulse.git@0.2.3",
+    "tktd_rna_pulse @ git+ssh://git@github.com/flo-schu/tktd_rna_pulse.git@0.2.7",
 ]
 license = {file = "LICENSE"}
 classifiers = [
