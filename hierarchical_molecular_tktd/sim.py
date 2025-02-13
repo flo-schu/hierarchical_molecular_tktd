@@ -275,7 +275,7 @@ class NomixHierarchicalSimulation(SingleSubstanceSim3):
         super().prior_predictive_checks()
         plot_y0(
             sim=self, 
-            idata=self.inferer.idata, 
+            idata=self.inferer.prior_predictions(), 
             parameter="cext", 
             idata_group="prior", 
             levels=["experiment_id", "substance",], 
