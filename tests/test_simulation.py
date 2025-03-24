@@ -12,10 +12,21 @@ def construct_sim(scenario, simulation_class):
 
 # List test scenarios and simulations
 @pytest.fixture(scope="module", params=[
-    "hierarchical_cext",
+    # early tests
     "hierarchical_cext_nested",
     "hierarchical_cext_nested_sigma_hyperprior",
-    "hierarchical_cext_nested_sigma_hyperprior_reduced_dataset",
+    # informed, reduced_dataset
+    "hierarchical_cext_nested_sigma_hyperprior_informed_reduced_dataset_rna_pulse_5",
+    "hierarchical_cext_nested_sigma_hyperprior_informed_reduced_dataset_rna_pulse_5_substance_independent",
+    # informed, full dataset
+    "hierarchical_cext_nested_sigma_hyperprior_informed_rna_pulse_5",
+    "hierarchical_cext_nested_sigma_hyperprior_informed_rna_pulse_5_substance_independent",
+    # uninformed, reduced dataset
+    "hierarchical_cext_nested_sigma_hyperprior_reduced_dataset_rna_pulse_5",
+    "hierarchical_cext_nested_sigma_hyperprior_reduced_dataset_rna_pulse_5_substance_independent",
+    # uninformed, full dataset
+    "hierarchical_cext_nested_sigma_hyperprior_rna_pulse_5",
+    "hierarchical_cext_nested_sigma_hyperprior_rna_pulse_5_substance_independent",
 ])
 def scenario(request):
     return request.param
@@ -48,7 +59,7 @@ def test_simulation(sim):
 
     assert True
             
-
+@pytest.mark.slow
 @pytest.mark.parametrize("backend", ["numpyro"])
 def test_inference(sim, backend):
     """Tests if prior predictions can be computed for arbitrary backends"""
@@ -66,7 +77,16 @@ def test_inference(sim, backend):
     sim.config.inference.n_predictions = 2
     sim.prior_predictive_checks()
 
+    sim.config.inference_numpyro.svi_iterations = 1_000
+    sim.config.inference_numpyro.svi_learning_rate = 0.05
+    sim.config.inference_numpyro.draws = 100
+    sim.config.inference.n_predictions = 100
 
+    sim.inferer.run()
+
+    sim.inferer.idata
+
+    sim.posterior_predictive_checks()
 
 if __name__ == "__main__":
     import os

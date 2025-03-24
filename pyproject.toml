@@ -24,6 +24,13 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Bio-Informatics",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest >= 7.3", 
+    "bumpver", 
+    "pre-commit",
+]
+
 [project.urls]
 "Homepage" = "https://github.com/flo-schu/hierarchical_molecular_tktd"
 "Issue Tracker" = "https://github.com/flo-schu/hierarchical_molecular_tktd/issues"
@@ -53,4 +60,9 @@ push = true
 ]
 "README.md" = [
     'git clone git@github.com:flo-schu/hierarchical_molecular_tktd/{version}'
+]
+
+[tool.pytest.ini_options]
+markers = [
+    "slow='mark test as slow.'"
 ]
