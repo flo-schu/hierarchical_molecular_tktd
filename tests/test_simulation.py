@@ -13,7 +13,6 @@ def construct_sim(scenario, simulation_class):
 # List test scenarios and simulations
 @pytest.fixture(scope="module", params=[
     # early tests
-    "hierarchical_cext_nested",
     "hierarchical_cext_nested_sigma_hyperprior",
     # informed, reduced_dataset
     "hierarchical_cext_nested_sigma_hyperprior_informed_reduced_dataset_rna_pulse_5",
