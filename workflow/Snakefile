@@ -22,6 +22,7 @@ rule concentration_comparison:
         "results/{scenario}/scatter_cext_nom_cext_sim.png",
         "results/{scenario}/scatter_cext_obs_cext_nom.png",
         "results/{scenario}/scatter_cext_obs_cext_sim.png",
+        "results/{scenario}/scatter_cext_combined.png",
 
     conda: config["pymob_infer"]["conda_env"]
     log: "logs/concentration_comparison_{scenario}.log"
