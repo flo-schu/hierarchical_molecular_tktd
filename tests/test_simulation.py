@@ -85,6 +85,7 @@ def test_inference(sim, backend):
 
     sim.inferer.idata
 
+    sim.report()
     sim.posterior_predictive_checks()
 
 if __name__ == "__main__":
@@ -94,4 +95,4 @@ if __name__ == "__main__":
         # this may work in case the root is a project with case_studies
         os.chdir("case_studies/tktd_rna_pulse")
 
-    test_simulation(sim=construct_sim("hierarchical_cext_nested_sigma_hyperprior", NomixHierarchicalSimulation))
+    test_inference(sim=construct_sim("hierarchical_cext_nested_sigma_hyperprior_informed_rna_pulse_5_substance_independent", NomixHierarchicalSimulation), backend="numpyro")
