@@ -2,29 +2,49 @@ from functools import partial
 from typing import Literal
 import xarray as xr
 import numpy as np
-import arviz as az
-from matplotlib import pyplot as plt
+import os
 
-from pymob import SimulationBase, Config
 from pymob.solvers.diffrax import JaxSolver
-from pymob.sim.config import DataVariable
 
-import jax.numpy as jnp
-import numpyro
-from numpyro import distributions as dist
+from tktd_rna_pulse.sim import SingleSubstanceSim3
+from tktd_rna_pulse.report import MolecularTKTDReport, reporting
+from hierarchical_molecular_tktd.plot import plot_y0
 
 # TODO: Remove
 EPS = 9.9e-5
 
-# load the basic TKTD RNA Pulse case study and use as a parent class for the
-# hierarchical model
-# config = Config()
-# config.case_study.name = "tktd_rna_pulse"
-# config.case_study.package = "case_studies"
-# config.import_casestudy_modules(reset_path=True)
-from tktd_rna_pulse.sim import SingleSubstanceSim3
+
+class HierarchicalMolecularTKTDReport(MolecularTKTDReport):
+    @reporting
+    def visualizations(self, sim):
+        out = super().visualizations(sim)
+
+        self._write("### $y_0$ estimation of external concentrations")
+        out_prior = plot_y0(
+            sim=sim, 
+            idata=sim.inferer.prior_predictions(), 
+            parameter="cext", 
+            idata_group="prior", 
+            levels=["experiment_id", "substance",], 
+            colors={"substance": ["tab:green", "tab:blue", "tab:purple"]}
+        )
+        self._write(f"![Prior $C_{{ext,0}}$ estimates and nominal concentrations]({os.path.basename(out_prior)})")
+
+        out_posterior = plot_y0(
+            sim=sim, 
+            idata=sim.inferer.idata, 
+            parameter="cext", 
+            idata_group="posterior", 
+            levels=["experiment_id", "substance",], 
+            colors={"substance": ["tab:green", "tab:blue", "tab:purple"]}
+        )
+        self._write(f"![Posterior $C_{{ext,0}}$ estimates and nominal concentrations]({os.path.basename(out_posterior)})")
+
+        return out_prior, out_posterior
 
 class NomixHierarchicalSimulation(SingleSubstanceSim3):
+    Report = HierarchicalMolecularTKTDReport
+
     def initialize(self, input):
         super().initialize(input)
         self.set_fixed_parameters(None)
@@ -273,93 +293,11 @@ class NomixHierarchicalSimulation(SingleSubstanceSim3):
 
     def prior_predictive_checks(self):
         super().prior_predictive_checks()
-        plot_y0(
-            sim=self, 
-            idata=self.inferer.prior_predictions(), 
-            parameter="cext", 
-            idata_group="prior", 
-            levels=["experiment_id", "substance",], 
-            colors={"substance": ["tab:green", "tab:blue", "tab:purple"]}
-        )
+
         
 
     def posterior_predictive_checks(self):
         super().posterior_predictive_checks()
-        plot_y0(
-            sim=self, 
-            idata=self.inferer.idata, 
-            parameter="cext", 
-            idata_group="posterior", 
-            levels=["experiment_id", "substance",], 
-            colors={"substance": ["tab:green", "tab:blue", "tab:purple"]}
-        )
-
-
-
-def plot_y0(sim, idata, idata_group, parameter, levels, colors={}):
-    fig, ax = plt.subplots(1,1, figsize=(16,3.5))
-    y0 = sim.model_parameters["y0"]
-    samples = idata[idata_group]
-
-    batch_dim = sim.config.simulation.batch_dimension
-    sorted_ids = sim.observations[batch_dim].sortby(levels)[batch_dim]
-
-    # plot nominal y0 values
-    y0_y = y0[parameter].sel({batch_dim: sorted_ids})
-    ax.plot(sorted_ids, y0_y, ls="", marker="o", color="black", ms=1)
-    ax.plot([],[], ls="", marker="o", color="black", ms=1, label=r"$y_0$ nominal")
-    
-    # plot samples from prior/posoterior. THis works, because it maps samples.id to sorted ids
-    samples_y = az.hdi(samples[f"{parameter}_y0"])[f"{parameter}_y0"].T
-    ax.vlines(samples[batch_dim], *samples_y, color="grey", lw=1)
-    ax.vlines([], [], [], color="grey", lw=1, label=f"$y_0$ {idata_group}")
-
-    
-    # using unique is fine, here, because I also ordered the IDs by substance
-    y_min = np.min([y0_y.min(), samples_y.min()])
-    y_max = np.max([y0_y.max(), samples_y.max()])
-
-    ordered_unique_level_0 = np.unique(sorted_ids[levels[0]])
-    colors_level_0 = colors.get(levels[0], ["grey"] * len(ordered_unique_level_0)) 
-    ordered_unique_level_1 = np.unique(sorted_ids[levels[1]])
-    colors_level_1 = colors.get(levels[1], ["grey"] * len(ordered_unique_level_1)) 
-
-    for l0, l0col in zip(ordered_unique_level_0, colors_level_0):
-        x_level_0 = np.where(sorted_ids[levels[0]] == l0)[0]
-        y_level_0 = (y_max * 12, y_max*120)
-        ax.fill_between(x_level_0, *y_level_0, color=l0col, alpha=.25)
-
-        ax.text(x_level_0.mean(), np.exp(np.mean(np.log(y_level_0))), s=str(l0)[:3], 
-                ha="center", va="center", color=l0col, fontsize=8)
-        # using unique is fine, here, because I also ordered the IDs by substance
-        # ordered_unique_experiment_ids = np.unique(sorted_ids.experiment_id)
-        # y_max = ax.get_ylim()[1]
-        for l1, l1col in zip(ordered_unique_level_1, colors_level_1):
-            x_level_1 = np.where(np.logical_and(
-                sorted_ids[levels[0]] == l0,
-                sorted_ids[levels[1]] == l1
-            ))[0]
-            if len(x_level_1) == 0:
-                continue
-            y_level_1 = (y_max, y_max*10)
-            ax.fill_between(x_level_1, *y_level_1, color=l1col, alpha=.25)
-            ax.text(x_level_1.mean(), np.exp(np.mean(np.log(y_level_1))), s=str(l1)[:3], 
-                    ha="center", va="center", color=l1col, fontsize=8)
-    
-
-
-    ax.set_xlim(-5,samples.dims["id"]+5)
-    ax.set_title(f"$C_{{e,0}}$ nominal + {idata_group}")
-    ax.set_ylabel(r"$C_{e,0}$")
-    ax.set_xticks([])
-    ax.set_yscale("log")
-    ax.set_yticks(10**np.arange(*np.round(np.log10([y_min, y_max*10])), 1))
-    ax.set_yticks(10**np.arange(*np.round(np.log10([y_min, y_max*10])), 1))
-    ax.set_xlabel("ID")
-    ax.legend(loc="lower right", ncols=2)
-    fig.tight_layout()
-    fig.savefig(f"{sim.output_path}/y0_nominal_{idata_group}.png")
-
 
 
 if __name__ == "__main__":
@@ -400,10 +338,10 @@ if __name__ == "__main__":
     # perform inference
     sim.config.jaxsolver.throw_exception = False
     sim.dispatch_constructor()
-    sim.use_numpyro_backend(
-        error_model=independent_survival_error_model,
-        only_prior=False
-    )
+    # sim.use_numpyro_backend(
+    #     error_model=independent_survival_error_model,
+    #     only_prior=False
+    # )
     sim.config.inference_numpyro.kernel = "nuts"
     sim.config.inference_numpyro.draws = 2000
     sim.config.inference_numpyro.svi_iterations = 1000

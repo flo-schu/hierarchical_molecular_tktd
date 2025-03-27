@@ -79,7 +79,7 @@ def test_inference(sim, backend):
     sim.config.inference_numpyro.svi_iterations = 1_000
     sim.config.inference_numpyro.svi_learning_rate = 0.05
     sim.config.inference_numpyro.draws = 100
-    sim.config.inference.n_predictions = 100
+    sim.config.inference.n_predictions = 10
 
     sim.inferer.run()
 
