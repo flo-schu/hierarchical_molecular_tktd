@@ -8,7 +8,7 @@ from pymob.solvers.diffrax import JaxSolver
 
 from tktd_rna_pulse.sim import SingleSubstanceSim3
 from tktd_rna_pulse.report import MolecularTKTDReport, reporting
-from hierarchical_molecular_tktd.plot import plot_y0
+from hierarchical_molecular_tktd.plot import plot_y0, compare_external_cocentrations
 
 # TODO: Remove
 EPS = 9.9e-5
@@ -40,7 +40,10 @@ class HierarchicalMolecularTKTDReport(MolecularTKTDReport):
         )
         self._write(f"![Posterior $C_{{ext,0}}$ estimates and nominal concentrations]({os.path.basename(out_posterior)})")
 
-        return out_prior, out_posterior
+        out_cext_compare = compare_external_cocentrations(sim=sim)
+        self._write(f"![$C_{{ext,0}}$ comparison between nominal, measured and estimated concentrations]({os.path.basename(out_cext_compare)})")
+
+        return out_prior, out_posterior, out_cext_compare
 
 class NomixHierarchicalSimulation(SingleSubstanceSim3):
     Report = HierarchicalMolecularTKTDReport
