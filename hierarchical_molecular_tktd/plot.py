@@ -17,21 +17,17 @@ def plot_y0(
     batch_dim = sim.config.simulation.batch_dimension
     sorted_ids = sim.observations[batch_dim].sortby(levels)[batch_dim]
 
-    # plot samples from prior/posoterior. THis works, because it maps samples.id to sorted ids
-    samples_y = az.hdi(samples[f"{parameter}_y0"])[f"{parameter}_y0"].T
-    ax.vlines(samples[batch_dim], *samples_y, color="grey", lw=1)
-    ax.vlines([], [], [], color="grey", lw=1, label=f"$y_0$ {idata_group}")
-
     # plot nominal y0 values
     y0_y = y0[parameter].sel({batch_dim: sorted_ids})
-    ax.plot(sorted_ids, y0_y, ls="", marker="o", color="black", ms=1)
-    ax.plot([],[], ls="", marker="o", color="black", ms=1.5, label=r"$y_0$ nominal")
+    ax.plot(sorted_ids, y0_y, ls="", marker="o", color="black", ms=1, zorder=1.01)
+    ax.plot([],[], ls="", marker="o", color="black", ms=1, label=r"$y_0$ nominal")
     
-    if show_observed:
-        y0_obs = sim.observations[parameter].sel({batch_dim: sorted_ids}).isel(time=0)
-        ax.plot(sorted_ids, y0_obs, ls="", marker="o", color="tab:red", ms=1, alpha=.5)
-        ax.plot([],[], ls="", marker="o", color="tab:red", ms=1.5, label=r"$y_0$ observed")
+    # plot samples from prior/posoterior. THis works, because it maps samples.id to sorted ids
+    samples_y = az.hdi(samples[f"{parameter}_y0"])[f"{parameter}_y0"].T
+    ax.vlines(samples[batch_dim], *samples_y, color="grey", lw=1, zorder=1.0)
+    ax.vlines([], [], [], color="grey", lw=1, label=f"$y_0$ {idata_group}")
 
+    
     # using unique is fine, here, because I also ordered the IDs by substance
     y_min = np.min([y0_y.min(), samples_y.min()])
     y_max = np.max([y0_y.max(), samples_y.max()])
@@ -64,6 +60,13 @@ def plot_y0(
             ax.fill_between(x_level_1, *y_level_1, color=l1col, alpha=.25)
             ax.text(x_level_1.mean(), y_mean_level_1, s=str(l1)[:3], 
                     ha="center", va="center", color=l1col, fontsize=8)
+
+
+    if show_observed:
+        y0_obs = sim.observations[parameter].sel({batch_dim: sorted_ids}).isel(time=0)
+        ax.plot(sorted_ids, y0_obs, ls="", marker="o", color="tab:red", ms=1, alpha=.5, zorder=1.02)
+        ax.plot([],[], ls="", marker="o", color="tab:red", ms=1, label=r"$y_0$ observed")
+    
 
     if show_measured_endpoints:
         # Endpoint measurement
