@@ -26,7 +26,9 @@ class HierarchicalMolecularTKTDReport(MolecularTKTDReport):
             parameter="cext", 
             idata_group="prior", 
             levels=["experiment_id", "substance",], 
-            colors={"substance": ["tab:green", "tab:blue", "tab:purple"]}
+            colors={"substance": ["tab:green", "tab:blue", "tab:purple"]},
+            show_observed=True,
+            show_measured_endpoints=True,
         )
         self._write(f"![Prior $C_{{ext,0}}$ estimates and nominal concentrations]({os.path.basename(out_prior)})")
 
@@ -36,7 +38,9 @@ class HierarchicalMolecularTKTDReport(MolecularTKTDReport):
             parameter="cext", 
             idata_group="posterior", 
             levels=["experiment_id", "substance",], 
-            colors={"substance": ["tab:green", "tab:blue", "tab:purple"]}
+            colors={"substance": ["tab:green", "tab:blue", "tab:purple"]},
+            show_observed=True,
+            show_measured_endpoints=True,
         )
         self._write(f"![Posterior $C_{{ext,0}}$ estimates and nominal concentrations]({os.path.basename(out_posterior)})")
 

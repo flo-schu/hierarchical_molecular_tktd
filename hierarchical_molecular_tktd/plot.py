@@ -5,7 +5,11 @@ import arviz as az
 from matplotlib import pyplot as plt
 from toopy.plot import letterer, draw_axis_letter
 
-def plot_y0(sim, idata, idata_group, parameter, levels, colors={}):
+def plot_y0(
+    sim, idata, idata_group, parameter, levels, colors={}, 
+    show_observed=False,
+    show_measured_endpoints=False,
+):
     fig, ax = plt.subplots(1,1, figsize=(16,3.5))
     y0 = sim.model_parameters["y0"]
     samples = idata[idata_group]
@@ -17,6 +21,11 @@ def plot_y0(sim, idata, idata_group, parameter, levels, colors={}):
     y0_y = y0[parameter].sel({batch_dim: sorted_ids})
     ax.plot(sorted_ids, y0_y, ls="", marker="o", color="black", ms=1)
     ax.plot([],[], ls="", marker="o", color="black", ms=1, label=r"$y_0$ nominal")
+    
+    if show_observed:
+        y0_obs = sim.observations[parameter].sel({batch_dim: sorted_ids}).isel(time=0)
+        ax.plot(sorted_ids, y0_obs, ls="", marker="o", color="tab:red", ms=1, alpha=.5)
+        ax.plot([],[], ls="", marker="o", color="tab:red", ms=1, label=r"$y_0$ observed")
     
     # plot samples from prior/posoterior. THis works, because it maps samples.id to sorted ids
     samples_y = az.hdi(samples[f"{parameter}_y0"])[f"{parameter}_y0"].T
@@ -35,10 +44,11 @@ def plot_y0(sim, idata, idata_group, parameter, levels, colors={}):
 
     for l0, l0col in zip(ordered_unique_level_0, colors_level_0):
         x_level_0 = np.where(sorted_ids[levels[0]] == l0)[0]
-        y_level_0 = (y_max * 12, y_max*120)
+        y_level_0 = (y_max * 6, y_max*25)
         ax.fill_between(x_level_0, *y_level_0, color=l0col, alpha=.25)
 
-        ax.text(x_level_0.mean(), np.exp(np.mean(np.log(y_level_0))), s=str(l0)[:3], 
+        y_mean_level_0 = np.exp(np.mean(np.log(y_level_0)))
+        ax.text(x_level_0.mean(), y_mean_level_0, s=str(l0)[:3], 
                 ha="center", va="center", color=l0col, fontsize=8)
         # using unique is fine, here, because I also ordered the IDs by substance
         # ordered_unique_experiment_ids = np.unique(sorted_ids.experiment_id)
@@ -50,22 +60,37 @@ def plot_y0(sim, idata, idata_group, parameter, levels, colors={}):
             ))[0]
             if len(x_level_1) == 0:
                 continue
-            y_level_1 = (y_max, y_max*10)
+            y_level_1 = (y_max * 1.2, y_max*5)
+            y_mean_level_1 = np.exp(np.mean(np.log(y_level_1)))
             ax.fill_between(x_level_1, *y_level_1, color=l1col, alpha=.25)
-            ax.text(x_level_1.mean(), np.exp(np.mean(np.log(y_level_1))), s=str(l1)[:3], 
+            ax.text(x_level_1.mean(), y_mean_level_1, s=str(l1)[:3], 
                     ha="center", va="center", color=l1col, fontsize=8)
-    
 
+    if show_measured_endpoints:
+        # Endpoint measurement
+        for dv_i, dv in enumerate(sim.config.data_structure.observed_data_variables):
+            for l0 in ordered_unique_level_0:
+                x_level_0 = np.where(sorted_ids[levels[0]] == l0)[0]
+                obs_level_0 = sim.observations.where(sorted_ids[levels[0]] == l0, drop=True)
+                is_dv_observed_in_experiment = bool((~obs_level_0[dv].isnull()).sum() > 0)
+                str_observed = "✔" if is_dv_observed_in_experiment else "✖️"
+                y_level_0 = y_max * 30 * np.exp(dv_i*0.75)
+
+                ax.text(
+                    x_level_0.mean(), y_level_0, str_observed,
+                    ha="center", va="center", color="black", fontsize=8
+                )
+            ax.text(-6, y_level_0, s=dv, ha="right", va="center", fontsize=8)
 
     ax.set_xlim(-5,samples.dims["id"]+5)
+    ax.set_ylim(y_min*0.5, y_level_0*1.5)
     ax.set_title(f"$C_{{e,0}}$ nominal + {idata_group}")
     ax.set_ylabel(r"$C_{e,0}$")
     ax.set_xticks([])
     ax.set_yscale("log")
     ax.set_yticks(10**np.arange(*np.round(np.log10([y_min, y_max*10])), 1))
-    ax.set_yticks(10**np.arange(*np.round(np.log10([y_min, y_max*10])), 1))
     ax.set_xlabel("ID")
-    ax.legend(loc="lower right", ncols=2)
+    ax.legend(loc="lower right", ncols=3)
     fig.tight_layout()
     out = f"{sim.output_path}/y0_nominal_{idata_group}.png"
     fig.savefig(out)
