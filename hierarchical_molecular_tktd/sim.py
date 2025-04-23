@@ -19,6 +19,8 @@ class HierarchicalMolecularTKTDReport(MolecularTKTDReport):
     def visualizations(self, sim):
         out = super().visualizations(sim)
 
+        sim.dispatch_constructor()
+
         self._write("### $y_0$ estimation of external concentrations")
         out_prior = plot_y0(
             sim=sim, 

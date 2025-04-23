@@ -19,13 +19,18 @@ def plot_y0(
 
     # plot nominal y0 values
     y0_y = y0[parameter].sel({batch_dim: sorted_ids})
-    ax.plot(sorted_ids, y0_y, ls="", marker="o", color="black", ms=1, zorder=1.01)
-    ax.plot([],[], ls="", marker="o", color="black", ms=1, label=r"$y_0$ nominal")
+    ax.plot(sorted_ids, y0_y, ls="", marker="o", color="black", ms=1, zorder=1.01, alpha=.6)
+    ax.plot([],[], ls="", marker="o", color="black", ms=1, label=r"$y_0$ nominal", alpha=.6)
     
     # plot samples from prior/posoterior. THis works, because it maps samples.id to sorted ids
-    samples_y = az.hdi(samples[f"{parameter}_y0"])[f"{parameter}_y0"].T
-    ax.vlines(samples[batch_dim], *samples_y, color="grey", lw=1, zorder=1.0)
-    ax.vlines([], [], [], color="grey", lw=1, label=f"$y_0$ {idata_group}")
+    if samples.dims["chain"] == 1 and samples.dims["draw"] == 1:
+        samples_y = samples[f"{parameter}_y0"].sel(chain=0, draw=0)
+        ax.plot(samples[batch_dim], samples_y, color="grey", ms=1, ls="", marker="o", zorder=1.0, alpha=.6)
+        ax.plot([], [], color="grey", ms=1, ls="", marker="o", label=f"$y_0$ {idata_group}", alpha=.6)
+    else:
+        samples_y = az.hdi(samples[f"{parameter}_y0"])[f"{parameter}_y0"].T
+        ax.vlines(samples[batch_dim], *samples_y, color="grey", lw=1, zorder=1.0)
+        ax.vlines([], [], [], color="grey", lw=1, label=f"$y_0$ {idata_group}")
 
     
     # using unique is fine, here, because I also ordered the IDs by substance
