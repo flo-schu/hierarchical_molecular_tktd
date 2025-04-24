@@ -22,9 +22,6 @@ pymob_infer:
   backend: numpyro
   conda_env: hmt
   jax_x64: True
-  extra_targets:
-    - scatter_cext_nom_cext_sim.png
-    - scatter_cext_obs_cext_nom.png
-    - scatter_cext_obs_cext_sim.png
-    - scatter_cext_combined.png
-    - report.md
+
+report:
+  compile: True
